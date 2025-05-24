@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authenticate with Yellowbrick</title>
+  <style>
+    @keyframes gradient-shift {
+      0% {
+        transform: translate(0%, 0%);
+      }
+      100% {
+        transform: translate(-29.9201%, -29.9201%);
+      }
+    }
+    body {
+      margin: 0;
+      background: black;
+      color: #2E2E2E;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #background-container canvas {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: -1;
+    }
+    #background-gradient {
+      z-index: -1;
+      position: absolute;
+      background: linear-gradient(135deg, #FFCD32, #86BC4D, #FFCD32, #55ACBA, #FFCD32, #1F4471, #FFCD32, #55ACBA, #FFCD32, #8E2E63, #FFCD32, #F29C11, #FFCD32, #412250, #FFCD32, #55ACBA, #FFCD32, #D34A24);
+      width: 2000%;
+      height: 2000%;
+      left: 0px;
+      top: 0px;
+      animation: gradient 1800s ease infinite;
+    }
+    @keyframes gradient {
+      0% {
+        transform: translate(0%, 0%);
+      }
+      50% {
+        transform: translate(-90%, -90%);
+      }
+      100% {
+        transform: translate(0%, 0%);
+      }
+    }
+    .container {
+      background-color: #FFFFFF;
+      border: 1px solid #a9a9a6;
+      border-radius: 6px;
+      padding: 4em;
+      text-align: center;
+      max-width: 500px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #383630;
+      margin-bottom: 1em;
+      font-size: 1.75em;
+      white-space: nowrap;
+      text-align: left;
+    }
+    a {
+      color: #86bc4d;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .button {
+      background-color: #86bc4d;
+      color: white;
+      border: none;
+      padding: 0.75em 2.25em;
+      border-radius: 6px;
+      font-size: 1.15em;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 1em 0em;
+    }
+    .button:hover {
+      background-color: rgb(46, 122, 80);
+      color: white;
+    }
+    .code-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+    .code {
+      background-color: #F6F6F6;
+      padding: 0.5em 1em;
+      border-radius: 6px;
+      font-family: monaco, monospace;
+      font-size: 1.5em;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin: 1em 1em;
+      display: inline-block;
+    }
+    .clipboard {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+      margin-left: 0.5em;
+      fill: #86bc4d;
+    }
+    .copied-message {
+      display: none;
+      position: absolute;
+      background: black;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 0.6em;
+      top: -1.5em;
+      right: -0.25em;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      font-family: sans-serif;
+      font-weight: normal;
+    }
+    .copied-message .triangle {
+      display: block;
+      margin: 0 auto;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 100%
+    }
+    .copied-message.show {
+      display: inline-block;
+      opacity: 1;
+    }
+    .header-container {
+      margin-bottom: 2em;
+      display: flex;
+      flex-direction: row;
+      justify-content: start;
+      align-items: center;
+    }
+    .logo-container {
+      width: 100px;  
+      height: 100px;
+      aspect-ratio: 350 / 289.87;
+      margin-right: 0rem;
+      margin-bottom: 0.5rem;
+      margin-left: -0.5rem;
+    }
+    .logo {
+      width: 100%;
+      height: 100%;
+    }
+
+  </style>
+  <script src="particles.js"></script>
+  <script>
+    function copyCode() {
+      navigator.clipboard.writeText('{{code}}').then(() => {
+        const msg = document.getElementById('copied');
+        msg.classList.add('show');
+        setTimeout(() => {
+          msg.classList.remove('show');
+        }, 1500);
+      });
+    }
+    function openBrowser(event) {
+      event.preventDefault();
+      if (event.ctrlKey || event.metaKey) {
+        // Open in new tab
+        window.open('{{url}}', '_blank');
+      } else {
+        // Navigate in the current tab
+        window.location.href = '{{url}}';
+      }
+    }
+    function initParticles() {
+      var particlesConfig = {
+        "particles": {
+          "number": {
+            "value": 2,
+            "density": {
+              "enable": true,
+              "value_area": 236.7442924896818
+            }
+          },
+          "color": {
+            "value": "#46bc4d"
+          },
+          "shape": {
+            "type": "circle",
+            "stroke": {
+              "width": 0,
+              "color": "#86BC4D"
+            },
+            "polygon": {
+              "nb_sides": 6
+            },
+            "image": {
+              "src": "img/github.svg",
+              "width": 100,
+              "height": 100
+            }
+          },
+          "opacity": {
+            "value": 0.3,
+            "random": false,
+            "anim": {
+              "enable": false,
+              "speed": 1,
+              "opacity_min": 0.1,
+              "sync": false
+            }
+          },
+          "size": {
+            "value": 125,
+            "random": true,
+            "anim": {
+              "enable": true,
+              "speed": 10,
+              "size_min": 10,
+              "sync": false
+            }
+          },
+          "line_linked": {
+            "enable": true,
+            "distance": 800,
+            "color": "#86BC4D",
+            "opacity": 0.4,
+            "width": 3
+          },
+          "move": {
+            "enable": true,
+            "speed": 2,
+            "direction": "none",
+            "random": false,
+            "straight": false,
+            "out_mode": "out",
+            "bounce": false,
+            "attract": {
+              "enable": false,
+              "rotateX": 600,
+              "rotateY": 1200
+            }
+          }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": {
+            "onhover": {
+              "enable": false,
+              "mode": "bubble"
+            },
+            "onclick": {
+              "enable": false,
+              "mode": "push"
+            },
+            "resize": true
+          },
+          "modes": {
+            "grab": {
+              "distance": 400,
+              "line_linked": {
+                "opacity": 1
+              }
+            },
+            "bubble": {
+              "distance": 400,
+              "size": 40,
+              "duration": 2,
+              "opacity": 8,
+              "speed": 3
+            },
+            "repulse": {
+              "distance": 200,
+              "duration": 0.4
+            },
+            "push": {
+              "particles_nb": 4
+            },
+            "remove": {
+              "particles_nb": 2
+            }
+          }
+        },
+        "retina_detect": true
+      }
+      window.particlesJS('background-container', particlesConfig)
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body onload="initParticles()">
+  <div class="container" id="background-container">
+    <div id="background-gradient"></div>
+
+    <div class="header-container">
+      <div class="logo-container">
+        <svg class="logo" xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 350 289.87">
+          <defs>
+            <linearGradient id="yb-gradient" x1="1079.93" y1="-180.63" x2="1216.99" y2="-418.03" gradientTransform="translate(0 429.18)"
+              gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#008fa9" />
+              <stop offset=".11" stop-color="#2aa07f" />
+              <stop offset=".24" stop-color="#56b254" />
+              <stop offset=".3" stop-color="#68ba44" />
+              <stop offset=".4" stop-color="#74bd3f" />
+              <stop offset=".56" stop-color="#93c535" />
+              <stop offset=".81" stop-color="#cad918" />
+              <stop offset="1" stop-color="#f5ea03" />
+            </linearGradient>
+          </defs>
+          <g transform="translate(-990,0)">
+            <path style="fill: url(#yb-gradient);"
+              d="M1065.51,91.77v21.26c-9.24-9.31-14.95-22.12-14.95-36.27,0-28.44,23.06-51.5,51.5-51.5s51.5,23.06,51.5,51.5c0,2.25-.16,4.47-.44,6.64h-79.81c-4.29,0-7.81,3.77-7.81,8.37Zm0,91.22v-60.5c-5.12-1.71-10.59-2.64-16.28-2.64-28.44,0-51.5,23.06-51.5,51.5s23.06,51.5,51.5,51.5c21.34,0,39.65-12.98,47.46-31.48h-23.37c-4.29,0-7.81-3.77-7.81-8.37Zm129.39,8.37h-93.36c-1.71,5.52-2.64,11.4-2.64,17.48,0,32.55,26.39,58.93,58.93,58.93s58.94-26.39,58.94-58.93c0-14.57-5.3-27.9-14.07-38.19v12.34c0,4.6-3.51,8.37-7.81,8.37Zm31.19-164.39c-33.67,0-61.62,24.37-67.24,56.43h36.06c4.29,0,7.81,3.77,7.81,8.37v67.67c7.29,2.66,15.17,4.11,23.38,4.11,37.71,0,68.29-30.57,68.29-68.29s-30.57-68.29-68.29-68.29Z" />
+            <path fill="#ffdb2c"
+              d="M1102.06,128.25c26.19,0,47.8-19.55,51.06-44.86h-79.81c-4.29,0-7.81,3.77-7.81,8.37v21.26c9.33,9.4,22.26,15.23,36.55,15.23Z" />
+            <path fill="#ffdb2c"
+              d="M1065.51,122.48v60.5c0,4.6,3.51,8.37,7.81,8.37h23.37c2.6-6.15,4.04-12.92,4.04-20.02,0-22.75-14.76-42.04-35.22-48.86Z" />
+            <path fill="#ffdb2c"
+              d="M1157.84,149.91c-26.46,0-48.85,17.44-56.3,41.45h93.36c4.29,0,7.81-3.77,7.81-8.37v-12.34c-10.81-12.69-26.89-20.75-44.87-20.75Z" />
+            <path fill="#ffdb2c"
+              d="M1194.9,83.4h-36.06c-.67,3.85-1.05,7.81-1.05,11.86,0,29.5,18.71,54.63,44.91,64.18V91.77c0-4.6-3.51-8.37-7.81-8.37Z" />
+          </g>
+        </svg>
+      </div>
+      <h1>Authenticate with Yellowbrick</h1>
+    </div>
+    <p style="font-size: 1.15rem">Visit <a href="{{url}}" target="_blank">{{url}}</a> and enter the code:</p>
+
+    <div class="code-container">
+      <div class="code" style="position: relative;">
+        {{code}}
+        <svg onclick="copyCode()" class="clipboard" viewBox="0 0 24 24">
+          <path d="M16 1H8C6.9 1 6 1.9 6 3H4C2.9 3 2 3.9 2 5V21C2 22.1 2.9 23 4 23H20C21.1 23 22 22.1 22 21V5C22 3.9 21.1 3 20 3H18C18 1.9 17.1 1 16 1ZM8 3H16V5H8V3ZM20 21H4V5H6V7H18V5H20V21Z"></path>
+        </svg>
+        <span id="copied" class="copied-message">
+          Copied!
+          <svg class="triangle" viewBox="0 0 10 5" width="10" height="5">
+            <polygon points="0,0 10,0 5,5" fill="black"/>
+          </svg>
+        </span>
+      </div>
+
+      <button class="button" onclick="openBrowser(event)">Login</button>
+    </div>
+  </div>
+</body>
+</html>
