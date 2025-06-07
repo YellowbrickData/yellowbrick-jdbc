@@ -61,6 +61,12 @@ This solution works with any OAuth2 provider that supports the Device Authorizat
 | `jdbc:yb:` | Yellowbrick JDBC URL prefix (recommended for OAuth2). |
 | `jdbc:postgresql:` | PostgreSQL-compatible prefix (legacy compatibility). |
 
+## 💡 PostgeSQL Driver Configuration
+
+Please visit the [PostgreSQL JDBC Driver Documentation](https://jdbc.postgresql.org/documentation/) for a complete
+listing of JDBC properties and settings to configure your connection.  Other than the settings specified in this 
+page, all other JDBC properties and settings are applicable to setting up your database connection.
+
 ## 🔑 OAuth2 Client Configuration
 
 These properties configure the OAuth2 flow for the driver.
