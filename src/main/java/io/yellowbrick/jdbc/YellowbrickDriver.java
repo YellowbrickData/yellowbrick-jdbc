@@ -81,7 +81,7 @@ public class YellowbrickDriver implements Driver, DriverConstants {
             DriverConfiguration driverConfiguration = new DriverConfiguration(info);
 
             // Get an access token using the TokenService
-            Token token = TokenService.getInstance(driverConfiguration).getToken(driverConfiguration, url, info);
+            Token token = TokenService.getInstance().getToken(driverConfiguration, url, info);
             if (token == null) {
                 throw new SQLException("Failed to obtain OAuth2 access token");
             }

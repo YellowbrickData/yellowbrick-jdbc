@@ -37,6 +37,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +94,7 @@ public class OAuth2Authorizer implements DriverConstants {
             HttpRequest deviceRequest = HttpRequest.newBuilder()
                     .uri(URI.create(endpoints.deviceEndpoint))
                     .header("Content-Type", "application/x-www-form-urlencoded")
+                    .header("Accept", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(devicePayload))
                     .build();
 
@@ -123,9 +125,11 @@ public class OAuth2Authorizer implements DriverConstants {
             trace("Browser URL: %s, user code: %s\n", url, userCode);
 
             if (this.driverConfiguration.noBrowser) {
-                System.out.printf(
-                        "\nTo authenticate to Yellowbrick, please visit this URL:\n\n    %s\n    and enter code %s\n\n",
-                        url, userCode);
+                if (!this.driverConfiguration.quiet) {
+                    System.out.printf(
+                            "\nTo authenticate to Yellowbrick, please visit this URL:\n\n    %s\n    and enter code %s\n\n",
+                            url, userCode);
+                }
             } else {
                 int port = getRandomFreePort();
                 server = new DeviceCodeServer(port, userCode, url);
@@ -153,12 +157,15 @@ public class OAuth2Authorizer implements DriverConstants {
 
             // Poll for token
             long expireAt = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(expiresIn);
+            trace("Token will expire in %d seconds, probing ever %d seconds, at %s\n", expiresIn, interval, Instant.ofEpochMilli(expireAt).toString());
             while (System.currentTimeMillis() < expireAt) {
                 TimeUnit.SECONDS.sleep(interval + 1); // Slight buffer over interval
 
+                trace("Query token endpoint %s with payload %s\n", endpoints.tokenEndpoint, tokenPayload);
                 HttpRequest tokenRequest = HttpRequest.newBuilder()
                         .uri(URI.create(endpoints.tokenEndpoint))
                         .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("Accept", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(tokenPayload))
                         .build();
 
@@ -215,7 +222,7 @@ public class OAuth2Authorizer implements DriverConstants {
             throw new SQLException("Invalid token format, missing payload");
         }
         String payload = tokenParts[1];
-        String decodedPayload = new String(java.util.Base64.getUrlDecoder().decode(payload),
+        String decodedPayload = new String(Base64.getUrlDecoder().decode(payload),
                 StandardCharsets.UTF_8);
         Map<String, Object> payloadMap = new JSONObject(decodedPayload).toMap();
         Instant expiresAt = Instant.ofEpochSecond(Long.parseLong(requireKey(payloadMap, "exp")));
@@ -240,6 +247,7 @@ public class OAuth2Authorizer implements DriverConstants {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(endpoints.tokenEndpoint))
                     .header("Content-Type", "application/x-www-form-urlencoded")
+                    .header("Accept", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -304,6 +312,7 @@ public class OAuth2Authorizer implements DriverConstants {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(configUri)
                 .GET()
+                .header("Accept", "application/json")
                 .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 

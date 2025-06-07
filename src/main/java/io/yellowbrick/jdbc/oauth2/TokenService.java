@@ -42,18 +42,17 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 
-
 public class TokenService {
     private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
     private static TokenService instance;
-    
+
     private final ConcurrentHashMap<String, Token> cache = new ConcurrentHashMap<>();
     private final AtomicBoolean cacheLoaded = new AtomicBoolean(false);
 
     private TokenService() {
     }
 
-    public static TokenService getInstance(DriverConfiguration driverConfiguration) throws SQLException {
+    public static TokenService getInstance() {
         if (instance == null) {
             synchronized (TokenService.class) {
                 if (instance == null) {
@@ -71,7 +70,8 @@ public class TokenService {
         }
 
         // Load the token cache from file if not already loaded
-        if (driverConfiguration.tokenCache == DriverConfiguration.TokenCacheOption.FILE && !cacheLoaded.compareAndExchange(false, true)) {
+        if (driverConfiguration.tokenCache == DriverConfiguration.TokenCacheOption.FILE
+                && !cacheLoaded.compareAndExchange(false, true)) {
             loadTokenCache();
         }
 
@@ -86,7 +86,8 @@ public class TokenService {
                 // If we have a refresh token, try to refresh the access token
                 if (token.getRefreshToken() != null) {
                     try {
-                        token = new OAuth2Authorizer(driverConfiguration, url, info).refreshOAuth2AccessToken(token.getRefreshToken());
+                        token = new OAuth2Authorizer(driverConfiguration, url, info)
+                                .refreshOAuth2AccessToken(token.getRefreshToken());
                         if (token != null) {
                             cache.put(key, token);
                             if (driverConfiguration.tokenCache == DriverConfiguration.TokenCacheOption.FILE) {
@@ -95,7 +96,8 @@ public class TokenService {
                             return token;
                         }
                     } catch (SQLException e) {
-                        // Fallthrough; we couldn't refresh the token, so remove it from cache and get a new one.
+                        // Fallthrough; we couldn't refresh the token, so remove it from cache and get a
+                        // new one.
                     }
                 }
 
@@ -203,7 +205,22 @@ public class TokenService {
         }
     }
 
+    void deleteTokenCache() { // Test only; ignore possibility of race.
+        File tokenCacheFile = getTokenCacheFile().toFile();
+        if (tokenCacheFile.exists()) {
+            tokenCacheFile.delete();
+        }
+        clearTokenCache();
+    }
+
+    void clearTokenCache() { // Test only; ignore possibility of race.
+        cache.clear();
+        cacheLoaded.set(false);
+    }
+
+    static String CACHE_FILE_NAME = "token-cache.json"; // mutable for test
+
     private Path getTokenCacheFile() {
-        return Paths.get(System.getProperty("user.home"), ".yb", "token", "token-cache.json");
+        return Paths.get(System.getProperty("user.home"), ".yb", "token", CACHE_FILE_NAME);
     }
 }

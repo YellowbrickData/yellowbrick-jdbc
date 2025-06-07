@@ -63,12 +63,13 @@ public interface DriverConstants {
     };
     String YB_JDBC_OAUTH2_TOKEN_CACHE_DEFAULT = YB_JDBC_OAUTH2_TOKEN_CACHE_MEMORY;
 
-    // Miscellaneous properties
-    String YB_JDBC_OAUTH2_NO_BROWSER = "oauth2NoBrowser";
-
     // Path to custom CA certificate (PEM)
     String YB_JDBC_OAUTH2_CACERT_PATH = "oauth2CAcertPath";
 
     // Disable trust to issuer URL (for testing purposes)
     String YB_JDBC_OAUTH2_DISABLE_TRUST = "oauth2SSLDisableTrust";
+
+    // Miscellaneous properties
+    String YB_JDBC_OAUTH2_NO_BROWSER = "oauth2NoBrowser";
+    String YB_JDBC_OAUTH2_QUIET = "oauth2Quiet"; // test only
 }

@@ -84,6 +84,7 @@ public class DriverConfiguration {
     public final TokenType tokenType;
     public final TokenCacheOption tokenCache;
     public final boolean noBrowser;
+    public final boolean quiet; // test only, and only if noBrowser is true
     public final String cacertPath;
     public final boolean disableTrust;
 
@@ -103,6 +104,8 @@ public class DriverConfiguration {
                 DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE_DEFAULT));
         this.noBrowser = Boolean.parseBoolean(info.getProperty(
                 DriverConstants.YB_JDBC_OAUTH2_NO_BROWSER, "false"));
+        this.quiet = Boolean.parseBoolean(info.getProperty(
+                DriverConstants.YB_JDBC_OAUTH2_QUIET, "false"));
         this.cacertPath = info.getProperty(DriverConstants.YB_JDBC_OAUTH2_CACERT_PATH);
         this.disableTrust = Boolean.parseBoolean(info.getProperty(
                 DriverConstants.YB_JDBC_OAUTH2_DISABLE_TRUST, "false"));
