@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.yellowbrick.jdbc.test;
+package io.yellowbrick.jdbc.help;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -30,11 +30,11 @@ import java.util.Properties;
 
 import io.yellowbrick.jdbc.DriverConstants;
 
-public class YellowbrickDriverOAuth2Test {
+public class YellowbrickDriverTester {
 
     public static void main(String[] args) {
         if (args.length < 5) {
-            System.err.println("Usage: java -jar <your-shaded-jar>.jar <host> <port> <database> <issuer> <clientId>");
+            System.err.println("Usage: java -jar <jar> <host> <port> <database> <issuer> <clientId>");
             System.exit(1);
         }
 
@@ -51,8 +51,25 @@ public class YellowbrickDriverOAuth2Test {
         props.setProperty(DriverConstants.YB_JDBC_OAUTH2_CLIENT_ID, clientId);
         props.setProperty(DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE, DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE_FILE);
 
-        System.out.println("Attempting to connect with URL: " + url);
+        System.out.printf(
+                "Please be sure that you have established external authentication configuration\n" +
+                "in your Yellowbrick database.\n\n" +
 
+                "See: https://docs.yellowbrick.com/latest/ybd_sqlref/create_external_auth.html\n\n" +
+
+                "(SQL command for these parameters)\n\n" +
+
+                "  CREATE EXTERNAL AUTHENTICATION jdbc\n" +
+                "    issuer '%s'\n" +
+                "    user_mapping_claim 'preferred_username'\n" +
+                "    grant ('consumer')\n" +
+                "    audience ('{%s}')\n" +
+                "    auto_create\n" +
+                "    enabled;\n"
+
+                , issuer, clientId);
+
+        System.out.println("\nAttempting to connect with URL: " + url);
         try (Connection conn = DriverManager.getConnection(url, props)) {
             System.out.println("Connection successful!");
         } catch (SQLException e) {
