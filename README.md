@@ -1,11 +1,10 @@
-# Yellowbrick JDBC Driver OAuth2 Configuration
+# Yellowbrick JDBC Driver
 
 This driver extends the **PostgreSQL JDBC Driver** with support for **OAuth2 authentication**.
 
-
 # 📄 Introduction
 
-Traditional JDBC connections authenticate using a username and password. While this model is widely supported, modern identity systems—including Yellowbrick—offer OAuth2-based authentication for enhanced security and integration with enterprise identity providers (IDPs) like Azure Active Directory or Okta.
+Traditional JDBC connections authenticate using a username and password. While this model is widely supported, modern identity systems—including Yellowbrick—offer OAuth2-based authentication for enhanced security and integration with enterprise identity providers (IDPs) like Azure Entry ID, Okta or Google.
 
 However, implementing OAuth2 authentication in a JDBC driver presents unique challenges:
 
@@ -27,13 +26,15 @@ The Yellowbrick JDBC driver wrapper solves this by:
 
 ### Device Flow Advantages:
 
-Instead of relying on a browser redirect, the driver presents the user with a device code.
+Instead of relying on a browser redirect required with an OAuth2 Authorization Code Flow, the driver presents the
+user with a device code by opening a browser window displaying a device code, and directing the user to an 
+IDP-provided device login page.
 
-The user authenticates externally by visiting a URL and entering the code.
+The user authenticates externally by visiting the IDP device code authentication endpoint and entering the code.
 
 This approach is compatible with IT policies that prohibit localhost redirects.
 
-### Optional UI Enhancements:
+### Browser Interaction:
 
 The driver opens a temporary browser window hosting a minimal web page (served from a random localhost port).
 
@@ -105,10 +106,10 @@ try (Connection conn = DriverManager.getConnection(url, props)) {
 
 By default, the driver **caches tokens** to avoid repeated browser logins.
 
-| Value | Description |
-|-------|-------------|
-| `memory` | Cache tokens in-memory for this JVM instance (default). |
-| `file` | Cache tokens in a file for reuse across sessions. |
+| Value      | Description                                                  |
+|------------|--------------------------------------------------------------|
+| `memory`   | Cache tokens in-memory for this JVM instance (default).      |
+| `file`     | Cache tokens in a file for reuse across sessions.            |
 | `disabled` | Disable token caching entirely (re-authenticate every time). |
 
 ### 📂 Default Cache File Location
@@ -117,6 +118,10 @@ By default, the driver **caches tokens** to avoid repeated browser logins.
 - **Windows**: Typically in the user's profile directory (e.g., `%APPDATA%` or `Local Settings`)
 
 **Important:** The token cache file contains OAuth2 tokens. If improperly secured, this file could allow an attacker to impersonate the user. Always ensure file permissions restrict access to the intended user. This risk is **similar to storing passwords in a `.pgpass` file** or using client profiles that store plaintext passwords.
+
+**OAuth2 Scopes:** in order to avoid repeated prompts for login, the `oauth2Scopes` parameter must include `offline_access` scope.  Even
+if using the `memory` scheme, using `offline_access` scope will reduce the need to repeatedly login.  Some JDBC client tools will open
+several connections to introspect database objects and metadata, and this configuration option assists in avoiding repeated logins.
 
 ---
 
@@ -157,7 +162,7 @@ Treat refresh tokens with care. Secure the cache file appropriately, and conside
 
 ## 🌐 External Authentication SQL Setup
 
-To use the Yellowbrick OAuth2 JDBC driver with Azure AD (or another OIDC provider), you must configure **external authentication** in Yellowbrick using SQL DDL.
+To use the Yellowbrick OAuth2 JDBC driver with Azure AD (or another OIDC provider), you must configure **external authentication** in Yellowbrick using SQL.  This is a one-time configuration requirement and requires privileged database administration privileges.
 
 Here’s an example:
 
@@ -168,7 +173,6 @@ CREATE EXTERNAL AUTHENTICATION ad
   user_mapping_claim 'preferred_username'
   grant ('consumer', 'consumeradmin', 'useradmin', 'securityadmin', 'clusteradmin', 'sysadmin')
   audience ('{clientId}')
-  disable trust
   auto_create
   enabled;
 ```
@@ -181,7 +185,6 @@ CREATE EXTERNAL AUTHENTICATION ad
 | `user_mapping_claim` | The claim in the token to map to Yellowbrick users (e.g., `preferred_username`). |
 | `grant` | Roles in Yellowbrick to assign to authenticated users. |
 | `audience` | Your OAuth2 `clientId` (matches `oauth2ClientId` in JDBC). |
-| `disable trust` | Allows connections without strict TLS certificate validation (use with caution). |
 | `auto_create` | Automatically create users upon first login. |
 | `enabled` | Enables the external authentication configuration. |
 
@@ -197,7 +200,7 @@ See [CREATE EXTERNAL AUTHENTICATION](https://docs.yellowbrick.com/latest/ybd_sql
 
 We at Yellowbrick recognize and embrace the value of opensource.
 
-There are a few opensource dependencies of note used to build this driver:
+There are a few opensource dependencies of note used to construct this driver:
 
 | Name         | License Type                  | URL                                            |
 |--------------|-------------------------------|------------------------------------------------|
