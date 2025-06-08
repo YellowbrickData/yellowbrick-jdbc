@@ -91,8 +91,8 @@ abstract class AuthorizerTestSupport {
                                             "device_code", OAUTH2_TEST_DEVICE_CODE,
                                             "user_code", OAUTH2_TEST_USER_CODE,
                                             "verification_uri", wm.url("verify"),
-                                            "expires_in", 10,
-                                            "interval", 1))));
+                                            "expires_in", 5,
+                                            "interval", 0))));
 
             stubFor(post(urlEqualTo("/token"))
                     .inScenario("TokenFlow")

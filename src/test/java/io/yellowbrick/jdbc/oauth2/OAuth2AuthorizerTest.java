@@ -40,7 +40,7 @@ import io.yellowbrick.jdbc.DriverConfiguration;
 import io.yellowbrick.jdbc.DriverConstants;
 
 @WireMockTest
-class OAuth2AuthorizerTests extends AuthorizerTestSupport {
+class OAuth2AuthorizerTest extends AuthorizerTestSupport {
 
     @Test
     @DisplayName("Authenticate With OAuth2 Device Code, ID Token")
