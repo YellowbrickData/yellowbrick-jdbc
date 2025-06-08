@@ -27,7 +27,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -38,6 +37,7 @@ import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -47,14 +47,16 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import io.yellowbrick.jdbc.DriverConfiguration;
 import io.yellowbrick.jdbc.DriverConstants;
 import io.yellowbrick.jdbc.web.DeviceCodeServer;
 
-
 public class OAuth2Authorizer implements DriverConstants {
+    private static final String ENCODING_JSON = "application/json";
+    private static final String ENCODING_FORM_URLENCODED = "application/x-www-form-urlencoded";
     private final DriverConfiguration driverConfiguration;
     private final String url;
     private final Properties info;
@@ -83,18 +85,19 @@ public class OAuth2Authorizer implements DriverConstants {
             HttpClient httpClient = clientBuilder.build();
 
             // Prepare device auth payload
-            String devicePayload = String.format("client_id=%s&scope=%s",
-                    URLEncoder.encode(driverConfiguration.clientId, StandardCharsets.UTF_8),
-                    URLEncoder.encode(driverConfiguration.scopes, StandardCharsets.UTF_8));
+            Map<String, Object> devicePayloadParams = new HashMap<>(Map.of(
+                    "client_id", driverConfiguration.clientId,
+                    "scope", driverConfiguration.scopes));
             if (driverConfiguration.loginHint != null) {
-                devicePayload += "&login_hint=" + URLEncoder.encode(driverConfiguration.loginHint, StandardCharsets.UTF_8);
+                devicePayloadParams.put("login_hint", driverConfiguration.loginHint);
             }
+            String devicePayload = FormParameterEncoder.toFormEncoding(devicePayloadParams);
 
             // Send device auth request
             HttpRequest deviceRequest = HttpRequest.newBuilder()
                     .uri(URI.create(endpoints.deviceEndpoint))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Accept", "application/json")
+                    .header("Content-Type", ENCODING_FORM_URLENCODED)
+                    .header("Accept", ENCODING_JSON)
                     .POST(HttpRequest.BodyPublishers.ofString(devicePayload))
                     .build();
 
@@ -111,7 +114,7 @@ public class OAuth2Authorizer implements DriverConstants {
                 }
             }
 
-            Map<String, Object> deviceContent = new JSONObject(deviceResponse.body()).toMap();
+            Map<String, Object> deviceContent = toJSONResponse(deviceResponse);
             trace("Got device auth: %d: %s\n", deviceResponse.statusCode(), deviceContent);
 
             // Display the verification URL and code.
@@ -143,13 +146,14 @@ public class OAuth2Authorizer implements DriverConstants {
             int interval = (int) Double.parseDouble(requireKey(deviceContent, "interval"));
 
             // Prepare token request payload
-            String tokenPayload = String.format(
-                    "grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=%s&client_id=%s",
-                    URLEncoder.encode(deviceCode, StandardCharsets.UTF_8),
-                    URLEncoder.encode(driverConfiguration.clientId, StandardCharsets.UTF_8));
+            Map<String, Object> tokenPayloadParams = new HashMap<>(Map.of(
+                    "grant_type", "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code", deviceCode,
+                    "client_id", driverConfiguration.clientId));
             if (driverConfiguration.clientSecret != null) {
-                tokenPayload += "&client_secret=" + URLEncoder.encode(driverConfiguration.clientSecret, StandardCharsets.UTF_8);
+                tokenPayloadParams.put("client_secret", driverConfiguration.clientSecret);
             }
+            String tokenPayload = FormParameterEncoder.toFormEncoding(tokenPayloadParams);
 
             // Components of token returned.
             String authToken = null;
@@ -157,21 +161,21 @@ public class OAuth2Authorizer implements DriverConstants {
 
             // Poll for token
             long expireAt = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(expiresIn);
-            trace("Token will expire in %d seconds, probing ever %d seconds, at %s\n", expiresIn, interval, Instant.ofEpochMilli(expireAt).toString());
+            trace("Token will expire in %d seconds, probing ever %d seconds, at %s\n", expiresIn, interval,
+                    Instant.ofEpochMilli(expireAt).toString());
             while (System.currentTimeMillis() < expireAt) {
-                TimeUnit.SECONDS.sleep(interval + 1); // Slight buffer over interval
 
                 trace("Query token endpoint %s with payload %s\n", endpoints.tokenEndpoint, tokenPayload);
                 HttpRequest tokenRequest = HttpRequest.newBuilder()
                         .uri(URI.create(endpoints.tokenEndpoint))
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .header("Accept", "application/json")
+                        .header("Content-Type", ENCODING_FORM_URLENCODED)
+                        .header("Accept", ENCODING_JSON)
                         .POST(HttpRequest.BodyPublishers.ofString(tokenPayload))
                         .build();
 
                 HttpResponse<String> tokenResponse = httpClient.send(tokenRequest,
                         HttpResponse.BodyHandlers.ofString());
-                Map<String, Object> tokenContent = new JSONObject(tokenResponse.body()).toMap();
+                Map<String, Object> tokenContent = toJSONResponse(tokenResponse);
                 trace("Got token auth: %d: %s\n", tokenResponse.statusCode(), tokenContent);
 
                 if (tokenResponse.statusCode() == 200) {
@@ -185,12 +189,14 @@ public class OAuth2Authorizer implements DriverConstants {
                 } else if (tokenResponse.statusCode() == 400 &&
                         "authorization_pending"
                                 .equals(tokenContent.get("error") != null ? tokenContent.get("error") : null)) {
-                    continue;
                 } else {
                     throw new SQLException("Invalid response: " + tokenResponse.statusCode() +
                             ", error: " + tokenContent.get("error") +
                             ", description: " + tokenContent.get("error_description"));
                 }
+
+                // Sleep a slight buffer over interval given to poll.
+                TimeUnit.MILLISECONDS.sleep(TimeUnit.SECONDS.toMillis(interval) + 100);
             }
 
             if (authToken == null) {
@@ -222,8 +228,7 @@ public class OAuth2Authorizer implements DriverConstants {
             throw new SQLException("Invalid token format, missing payload");
         }
         String payload = tokenParts[1];
-        String decodedPayload = new String(Base64.getUrlDecoder().decode(payload),
-                StandardCharsets.UTF_8);
+        String decodedPayload = new String(Base64.getUrlDecoder().decode(payload), StandardCharsets.UTF_8);
         Map<String, Object> payloadMap = new JSONObject(decodedPayload).toMap();
         Instant expiresAt = Instant.ofEpochSecond(Long.parseLong(requireKey(payloadMap, "exp")));
         trace("Token expires at: %s\n", expiresAt);
@@ -235,20 +240,22 @@ public class OAuth2Authorizer implements DriverConstants {
             Endpoints endpoints = getAuthorizationEndpoints();
 
             // Create payload for token refresh request
-            String payload = "grant_type=refresh_token" +
-                    "&refresh_token=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8) +
-                    "&client_id=" + URLEncoder.encode(driverConfiguration.clientId, StandardCharsets.UTF_8);
+            Map<String, Object>  refreshTokenParams = new HashMap<>(Map.of(
+                    "grant_type", "refresh_token",
+                    "refresh_token", refreshToken,
+                    "client_id", driverConfiguration.clientId));
             if (driverConfiguration.clientSecret != null) {
-                payload += "&client_secret=" + URLEncoder.encode(driverConfiguration.clientSecret, StandardCharsets.UTF_8);
+                refreshTokenParams.put("client_secret", driverConfiguration.clientSecret);
             }
+            String refreshTokenPayload = FormParameterEncoder.toFormEncoding(refreshTokenParams);
 
             // Perform the token refresh request
             HttpClient client = createHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(endpoints.tokenEndpoint))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Accept", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(payload))
+                    .header("Content-Type", ENCODING_FORM_URLENCODED)
+                    .header("Accept", ENCODING_JSON)
+                    .POST(HttpRequest.BodyPublishers.ofString(refreshTokenPayload))
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
@@ -256,7 +263,7 @@ public class OAuth2Authorizer implements DriverConstants {
             }
 
             // Determine auth token and refresh token.
-            Map<String, Object> tokenContent = new JSONObject(response.body()).toMap();
+            Map<String, Object> tokenContent = toJSONResponse(response);
             String authToken;
             if (driverConfiguration.tokenType == DriverConfiguration.TokenType.ID_TOKEN) {
                 authToken = (String) tokenContent.get("id_token");
@@ -312,7 +319,7 @@ public class OAuth2Authorizer implements DriverConstants {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(configUri)
                 .GET()
-                .header("Accept", "application/json")
+                .header("Accept", ENCODING_JSON)
                 .timeout(java.time.Duration.ofSeconds(10))
                 .build();
 
@@ -322,11 +329,22 @@ public class OAuth2Authorizer implements DriverConstants {
                     "Could not retrieve endpoints from " + configUri + ", response code: " + response.statusCode());
         }
 
-        Map<String, Object> json = new JSONObject(response.body()).toMap();
+        Map<String, Object> json = toJSONResponse(response);
         Endpoints endpoints = new Endpoints();
         endpoints.tokenEndpoint = requireKey(json, "token_endpoint");
         endpoints.deviceEndpoint = requireKey(json, "device_authorization_endpoint");
         return endpoints;
+    }
+
+    private static Map<String, Object> toJSONResponse(HttpResponse<String> tokenResponse) {
+        try {
+            return new JSONObject(tokenResponse.body()).toMap();
+        } catch (JSONException e) {
+            Map<String, Object> tokenContent = new HashMap<>();
+            tokenContent.put("error", tokenResponse.body());
+            tokenContent.put("error_description", "(content returned was not JSON)");
+            return tokenContent;
+        }
     }
 
     private static class Endpoints {
