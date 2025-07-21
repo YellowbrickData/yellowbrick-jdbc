@@ -161,7 +161,7 @@ public class YellowbrickDriver implements Driver, DriverConstants {
         props.add(cacertPath);
 
         // No browser option
-        DriverPropertyInfo noBrowser = new DriverPropertyInfo(YB_JDBC_OAUTH2_NO_BROWSER, info.getProperty(YB_JDBC_OAUTH2_NO_BROWSER));
+        DriverPropertyInfo noBrowser = new DriverPropertyInfo(YB_JDBC_OAUTH2_NO_BROWSER, info.getProperty(YB_JDBC_OAUTH2_NO_BROWSER, "false"));
         noBrowser.description = "If true, do not attempt to open a browser for device code login.  For command line tools that display stdout.  Default is false.";
         noBrowser.required = false;
         noBrowser.choices = new String[]{"true", "false"};
@@ -169,6 +169,33 @@ public class YellowbrickDriver implements Driver, DriverConstants {
 
         // Add properties from the underlying PostgreSQL driver
         Collections.addAll(props, delegate.getPropertyInfo(url, info));
+
+        // Modify the default application name property.
+        DriverPropertyInfo appName = props.stream()
+                .filter(p -> p.name.equals("ApplicationName"))
+                .findFirst()
+                .orElse(null);
+        if (appName != null) {
+            appName.value = "Yellowbrick JDBC Driver";
+        }
+
+        // Modify the default fetch size property.
+        DriverPropertyInfo defaultRowFetchSize = props.stream()
+                .filter(p -> p.name.equals("defaultRowFetchSize"))
+                .findFirst()
+                .orElse(null);
+        if (defaultRowFetchSize != null) {
+            defaultRowFetchSize.value = "10000";
+        }
+
+        // Modify the default reWriteBatchedInserts property.
+        DriverPropertyInfo reWriteBatchedInserts = props.stream()
+                .filter(p -> p.name.equals("reWriteBatchedInserts"))
+                .findFirst()
+                .orElse(null);
+        if (reWriteBatchedInserts != null) {
+            reWriteBatchedInserts.value = "true";
+        }
 
         return props.toArray(new DriverPropertyInfo[0]);
     }
