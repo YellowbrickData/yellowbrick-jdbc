@@ -68,6 +68,10 @@ Please visit the [PostgreSQL JDBC Driver Documentation](https://jdbc.postgresql.
 listing of JDBC properties and settings to configure your connection.  Other than the settings specified in this 
 page, all other JDBC properties and settings are applicable to setting up your database connection.
 
+The class name for the Yellowbrick JDBC Driver is `io.yellowbrick.jdbc.YellowbrickDriver`.  If your application
+requires direct load of this driver or specifying the driver class in its connection configuration, use this
+class, not the PostgreSQL driver class.
+
 ## 🔑 OAuth2 Client Configuration
 
 These properties configure the OAuth2 flow for the driver.
