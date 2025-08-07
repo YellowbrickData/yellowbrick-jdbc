@@ -131,6 +131,12 @@ public class YellowbrickDriver implements Driver, DriverConstants {
         loginHint.required = false;
         props.add(loginHint);
 
+        // Optional audience
+        DriverPropertyInfo audience = new DriverPropertyInfo(YB_JDBC_OAUTH2_AUDIENCE, info.getProperty(YB_JDBC_OAUTH2_AUDIENCE));
+        audience.description = "The OAuth2 audience setting. Not required for all IDPs, but some may allow it or require it.";
+        audience.required = true;
+        props.add(audience);
+
         // OAuth2 scopes
         String scopesValue = info.getProperty(YB_JDBC_OAUTH2_SCOPES, YB_JDBC_OAUTH2_SCOPES_DEFAULT);
         DriverPropertyInfo scopes = new DriverPropertyInfo(YB_JDBC_OAUTH2_SCOPES, scopesValue);

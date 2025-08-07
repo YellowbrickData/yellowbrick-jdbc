@@ -27,7 +27,7 @@ The Yellowbrick JDBC driver wrapper solves this by:
 ### Device Flow Advantages:
 
 Instead of relying on a browser redirect required with an OAuth2 Authorization Code Flow, the driver presents the
-user with a device code by opening a browser window displaying a device code, and directing the user to an 
+user with a device code by opening a browser window displaying a device code, and directing the user to an
 IDP-provided device login page.
 
 The user authenticates externally by visiting the IDP device code authentication endpoint and entering the code.
@@ -65,7 +65,7 @@ This solution works with any OAuth2 provider that supports the Device Authorizat
 ## 💡 PostgeSQL Driver Configuration
 
 Please visit the [PostgreSQL JDBC Driver Documentation](https://jdbc.postgresql.org/documentation/) for a complete
-listing of JDBC properties and settings to configure your connection.  Other than the settings specified in this 
+listing of JDBC properties and settings to configure your connection.  Other than the settings specified in this
 page, all other JDBC properties and settings are applicable to setting up your database connection.
 
 The class name for the Yellowbrick JDBC Driver is `io.yellowbrick.jdbc.YellowbrickDriver`.  If your application
@@ -82,6 +82,7 @@ These properties configure the OAuth2 flow for the driver.
 | `oauth2ClientId` | OAuth2 Client ID for authentication. | ✅ | `abc123` |
 | `oauth2ClientSecret` | OAuth2 Client Secret for authentication. | Optional | `s3cr3t` |
 | `oauth2LoginHint` | Optional login hint (e.g., username/email). | Optional | `user@example.com` |
+| `oauth2Audience` | Optional audience setting if IDP requires it. | Optional | |
 | `oauth2Scopes` | OAuth2 scopes to request. | Optional (default: `openid email profile offline_access`) | `openid email profile` |
 | `oauth2TokenType` | Token type to use for authentication. Options: `id-token` (default) or `access-token`. | Optional | `access-token` |
 | `oauth2TokenCache` | Token cache strategy. Options: `memory` (default), `file`, `disabled`. | Optional | `file` |

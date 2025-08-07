@@ -88,10 +88,20 @@ public class OAuth2Authorizer implements DriverConstants {
             Map<String, Object> devicePayloadParams = new HashMap<>(Map.of(
                     "client_id", driverConfiguration.clientId,
                     "scope", driverConfiguration.scopes));
-            if (driverConfiguration.loginHint != null) {
+            if (driverConfiguration.loginHint != null && !driverConfiguration.loginHint.isEmpty()) {
                 devicePayloadParams.put("login_hint", driverConfiguration.loginHint);
             }
+            if (driverConfiguration.audience != null && !driverConfiguration.audience.isEmpty()) {
+                devicePayloadParams.put("audience", driverConfiguration.audience);
+            }
+
+            // It is incorrect to include the client secret in the device endpoint exchange.
+            // Leaving this here to avoid adding it later by mistake.
+            if (false && driverConfiguration.clientSecret != null && !driverConfiguration.clientSecret.isEmpty()) {
+                devicePayloadParams.put("client_secret", driverConfiguration.clientSecret);
+            }
             String devicePayload = FormParameterEncoder.toFormEncoding(devicePayloadParams);
+            trace("Query device endpoint %s with payload %s\n", endpoints.deviceEndpoint, devicePayload);
 
             // Send device auth request
             HttpRequest deviceRequest = HttpRequest.newBuilder()
@@ -150,8 +160,11 @@ public class OAuth2Authorizer implements DriverConstants {
                     "grant_type", "urn:ietf:params:oauth:grant-type:device_code",
                     "device_code", deviceCode,
                     "client_id", driverConfiguration.clientId));
-            if (driverConfiguration.clientSecret != null) {
+            if (driverConfiguration.clientSecret != null && !driverConfiguration.clientSecret.isEmpty()) {
                 tokenPayloadParams.put("client_secret", driverConfiguration.clientSecret);
+            }
+            if (driverConfiguration.audience != null && !driverConfiguration.audience.isEmpty()) {
+                tokenPayloadParams.put("audience", driverConfiguration.audience);
             }
             String tokenPayload = FormParameterEncoder.toFormEncoding(tokenPayloadParams);
 
@@ -244,7 +257,7 @@ public class OAuth2Authorizer implements DriverConstants {
                     "grant_type", "refresh_token",
                     "refresh_token", refreshToken,
                     "client_id", driverConfiguration.clientId));
-            if (driverConfiguration.clientSecret != null) {
+            if (driverConfiguration.clientSecret != null && !driverConfiguration.clientSecret.isEmpty()) {
                 refreshTokenParams.put("client_secret", driverConfiguration.clientSecret);
             }
             String refreshTokenPayload = FormParameterEncoder.toFormEncoding(refreshTokenParams);
@@ -287,11 +300,16 @@ public class OAuth2Authorizer implements DriverConstants {
         }
     }
 
-    private final boolean verbose = System.getenv("YBVERBOSE") != null;
+    private final boolean verboseVerbose = System.getenv("YBVERBOSEVERBOSE") != null; // Like curl -vv, more verbose, but not safe
+    private final boolean verbose = verboseVerbose || System.getenv("YBVERBOSE") != null;
 
     protected void trace(String fmt, Object... args) {
         if (verbose) {
-            System.err.printf(fmt, args);
+            String message = String.format(fmt, args);
+            if (!verboseVerbose) {
+                message = message.replaceAll("(?i)(password|secret)\\s*=\\s*[^&,;\\s]*", "$1=*******");
+            }
+            System.err.print(message);
         }
     }
 

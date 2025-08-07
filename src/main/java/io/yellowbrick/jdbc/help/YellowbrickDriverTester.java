@@ -34,7 +34,7 @@ public class YellowbrickDriverTester {
 
     public static void main(String[] args) {
         if (args.length < 5) {
-            System.err.println("Usage: java -jar <jar> <host> <port> <database> <issuer> <clientId>");
+            System.err.println("Usage: java -jar <jar> <host> <port> <database> <issuer> <clientId> <clientSecret>");
             System.exit(1);
         }
 
@@ -43,12 +43,16 @@ public class YellowbrickDriverTester {
         String database = args[2];
         String issuer = args[3];
         String clientId = args[4];
+        String clientSecret = args.length > 5 ? args[5] : null;
 
         String url = String.format("jdbc:yb://%s:%s/%s", host, port, database);
 
         Properties props = new Properties();
         props.setProperty(DriverConstants.YB_JDBC_OAUTH2_ISSUER, issuer);
         props.setProperty(DriverConstants.YB_JDBC_OAUTH2_CLIENT_ID, clientId);
+        if (clientSecret != null) {
+            props.setProperty(DriverConstants.YB_JDBC_OAUTH2_CLIENT_SECRET, clientSecret);
+        }
         props.setProperty(DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE, DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE_FILE);
 
         System.out.printf(

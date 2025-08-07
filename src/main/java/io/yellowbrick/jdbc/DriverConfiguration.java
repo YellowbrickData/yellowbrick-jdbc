@@ -81,6 +81,7 @@ public class DriverConfiguration {
     public final String issuer;
     public final String loginHint;
     public final String scopes;
+    public final String audience;
     public final TokenType tokenType;
     public final TokenCacheOption tokenCache;
     public final boolean noBrowser;
@@ -93,6 +94,7 @@ public class DriverConfiguration {
         this.clientSecret = info.getProperty(DriverConstants.YB_JDBC_OAUTH2_CLIENT_SECRET);
         this.issuer = info.getProperty(DriverConstants.YB_JDBC_OAUTH2_ISSUER);
         this.loginHint = info.getProperty(DriverConstants.YB_JDBC_OAUTH2_LOGIN_HINT);
+        this.audience = info.getProperty(DriverConstants.YB_JDBC_OAUTH2_AUDIENCE);
         this.scopes = info.getProperty(
                 DriverConstants.YB_JDBC_OAUTH2_SCOPES,
                 DriverConstants.YB_JDBC_OAUTH2_SCOPES_DEFAULT);

@@ -37,6 +37,9 @@ public interface DriverConstants {
     // Optional login hint (e.g., to prefill username)
     String YB_JDBC_OAUTH2_LOGIN_HINT = "oauth2LoginHint";
 
+    // Optional audience
+    String YB_JDBC_OAUTH2_AUDIENCE = "oauth2Audience";
+
     // Scopes for access token requests
     String YB_JDBC_OAUTH2_SCOPES = "oauth2Scopes";
     String YB_JDBC_OAUTH2_SCOPES_DEFAULT = "openid email profile offline_access";
