@@ -56,6 +56,7 @@ abstract class AuthorizerTestSupport {
     static final String OAUTH2_TEST_ERROR = "not_authorized";
     static final String OAUTH2_TEST_ERROR_DESCRIPTION = "a descriptive error";
     static final long OAUTH2_TEST_TOKEN_EXPIRATION = TimeUnit.SECONDS.toMillis(10);
+    static final String OAUTH2_TEST_URL = "jdbc:yb://host:5432/mydb?foo=bar";
 
     // For each test, setup stock properties for OAuth2.
     Properties info;

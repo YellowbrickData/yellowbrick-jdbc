@@ -23,6 +23,9 @@
  */
 package io.yellowbrick.jdbc.oauth2;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -44,14 +47,18 @@ public class Token {
     private final String authToken; // This is the access token OR id token, depending on the type
     private final String refreshToken; // ONLY if scope includes "offline_access"
     private final Instant expiresAt; // Expiration time of the auth token
-    private final String url; // URL used to obtain the token
+    private final String connection; // Connection information for the token
     private final Properties info; // Additional properties used to obtain the connection
 
-    public Token(String authToken, String refreshToken, Instant expiresAt, String url, Properties info) {
+    public static Token createToken(String authToken, String refreshToken, Instant expiresAt, String url, Properties info) throws SQLException {
+        return new Token(authToken, refreshToken, expiresAt, extractConnectionInfo(url), info);
+    }
+
+    private Token(String authToken, String refreshToken, Instant expiresAt, String connection, Properties info) {
         this.authToken = authToken;
         this.refreshToken = refreshToken;
         this.expiresAt = expiresAt;
-        this.url = url;
+        this.connection = connection;
 
         // All the info properties except password.
         this.info = copyOf(info);
@@ -69,8 +76,8 @@ public class Token {
         return expiresAt;
     }
 
-    public String getUrl() {
-        return url;
+    public String getConnection() {
+        return connection;
     }
 
     public Properties getInfo() {
@@ -84,15 +91,15 @@ public class Token {
     public static Properties copyOf(Properties info) {
         Properties result = new Properties();
         for (String key : info.stringPropertyNames()) {
-            if (!key.equals("password")) {
+            if (!key.equalsIgnoreCase("password")) {
                 result.setProperty(key, info.getProperty(key));
             }
         }
         return result;
     }
 
-    public boolean matches(String url, Properties info) {
-        return this.url.equals(url) && Objects.equals(this.info, copyOf(info));
+    public boolean matches(String connection, Properties info) {
+        return this.connection.equals(connection) && Objects.equals(this.info, copyOf(info));
     }
 
     public JSONObject toJSONObject() {
@@ -100,7 +107,7 @@ public class Token {
         json.put("authToken", authToken);
         json.put("refreshToken", refreshToken);
         json.put("expiresAt", expiresAt != null ? expiresAt.toString() : null); // ISO 8601 string
-        json.put("url", url);
+        json.put("connection", connection);
         JSONObject infoJson = new JSONObject();
         for (Map.Entry<Object, Object> entry : info.entrySet()) {
             infoJson.put(entry.getKey().toString(), entry.getValue().toString());
@@ -109,12 +116,18 @@ public class Token {
         return json;
     }
 
-    public static Token fromJSONObject(JSONObject json) {
+    public static Token fromJSONObject(JSONObject json) throws SQLException {
         String authToken = json.optString("authToken", null);
         String refreshToken = json.optString("refreshToken", null);
         String expiresAtStr = json.optString("expiresAt", null);
         Instant expiresAt = (expiresAtStr != null) ? Instant.parse(expiresAtStr) : null;
-        String url = json.optString("url", null);
+        String connection = json.optString("connection", null);
+        if (connection == null) {
+            String url = json.optString("url", null); // attempt fallback
+            if (url != null) {
+                connection = extractConnectionInfo(url);
+            }
+        }
         Properties info = new Properties();
         JSONObject infoJson = json.optJSONObject("info");
         if (infoJson != null) {
@@ -123,6 +136,38 @@ public class Token {
                 info.setProperty(entry.getKey(), entry.getValue().toString());
             }
         }
-        return new Token(authToken, refreshToken, expiresAt, url, info);
+        return new Token(authToken, refreshToken, expiresAt, connection, info);
+    }
+
+    /** 
+     * Build connection key from host + port + url parameters
+     *
+     * Why? the identity here is for the user, not the database.  A user either has the privilege
+     *      to CONNECT to the database or not, but the same token can be used for any target
+     *      database.
+     */
+    static String extractConnectionInfo(String jdbcUrl) throws SQLException {
+        try {
+            if (!jdbcUrl.startsWith("jdbc:")) {
+                throw new SQLException("Invalid JDBC URL: must start with 'jdbc:'");
+            }
+
+            // Remove the jdbc: prefix for URI parsing
+            String rawUrl = jdbcUrl.substring(5);
+            URI uri = new URI(rawUrl);
+
+            // Append scheme:host:port?queryParameters
+            StringBuilder result = new StringBuilder();
+            result.append(uri.getScheme()).append(":").append(uri.getHost());
+            if (uri.getPort() != -1) {
+                result.append(":").append(uri.getPort());
+            }
+            if (uri.getQuery() != null) {
+                result.append("?").append(uri.getQuery());
+            }
+            return result.toString();
+        } catch (URISyntaxException e) {
+            throw new SQLException("Failed to parse JDBC URL: " + jdbcUrl, e);
+        }
     }
 }

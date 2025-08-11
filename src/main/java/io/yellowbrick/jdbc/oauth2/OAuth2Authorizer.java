@@ -218,7 +218,7 @@ public class OAuth2Authorizer implements DriverConstants {
             trace("Returning token: %s\n", authToken);
 
             // Return the token object.
-            return new Token(authToken, refreshToken, getTokenExpiration(authToken), this.url, this.info);
+            return Token.createToken(authToken, refreshToken, getTokenExpiration(authToken), this.url, this.info);
         } catch (SQLException sqlEx) {
             throw sqlEx;
         } catch (Exception ex) {
@@ -285,7 +285,7 @@ public class OAuth2Authorizer implements DriverConstants {
             }
             String newRefreshToken = (String) tokenContent.getOrDefault("refresh_token", refreshToken);
 
-            return new Token(authToken, newRefreshToken, getTokenExpiration(authToken), this.url, this.info);
+            return Token.createToken(authToken, newRefreshToken, getTokenExpiration(authToken), this.url, this.info);
         } catch (SQLException sqlEx) {
             throw sqlEx;
         } catch (Exception e) {

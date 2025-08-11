@@ -39,6 +39,8 @@ import org.json.JSONObject;
 import io.yellowbrick.jdbc.DriverConfiguration;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 
@@ -76,7 +78,8 @@ public class TokenService {
         }
 
         // Fetch from cache if available.
-        String key = buildTokenCacheHash(url, info);
+        String connection = Token.extractConnectionInfo(url);
+        String key = buildTokenCacheHash(connection, info);
         Token token = cache.get(key);
         if (token != null) {
 
@@ -106,7 +109,7 @@ public class TokenService {
             } else {
 
                 // Make sure token matches.
-                if (token.matches(url, info)) {
+                if (token.matches(connection, info)) {
                     return token;
                 }
             }
@@ -135,8 +138,15 @@ public class TokenService {
         return new String(hexChars);
     }
 
-    // Build hash key from url + info
-    private static String buildTokenCacheHash(String url, Properties info) {
+    /** 
+     * Build hash key from connection + info
+     *
+     * How: database url is handle using scheme:host:port and connection parameters, not database.
+     * Why? the identity here is for the user, not the database.  A user either has the privilege
+     *      to CONNECT to the database or not, but the same token can be used for any target
+     *      database.
+     */
+    private static String buildTokenCacheHash(String connection, Properties info) throws SQLException {
         TreeMap<String, String> sortedProps = new TreeMap<>();
         for (String name : info.stringPropertyNames()) {
             String value = info.getProperty(name);
@@ -145,12 +155,15 @@ public class TokenService {
 
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : sortedProps.entrySet()) {
-            if ("password".equals(entry.getKey())) {
+            if ("password".equalsIgnoreCase(entry.getKey())) {
                 continue; // Exclude password from hash
+            }
+            if ("database".equalsIgnoreCase(entry.getKey()) || "databaseName".equalsIgnoreCase(entry.getKey())) {
+                continue; // Exclude database or databaseName from hash; see comment
             }
             sb.append(entry.getKey()).append('=').append(entry.getValue()).append(';');
         }
-        sb.append("url=").append(url != null ? url : "").append(';');
+        sb.append("connection=").append(connection).append(';');
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -163,8 +176,8 @@ public class TokenService {
     }
 
     private void loadTokenCache() throws SQLException {
+        Path tokenCacheFile = getTokenCacheFile();
         try {
-            Path tokenCacheFile = getTokenCacheFile();
             if (!Files.exists(tokenCacheFile)) {
                 return;
             }
@@ -173,11 +186,11 @@ public class TokenService {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject obj = jsonArray.getJSONObject(i);
                 Token token = Token.fromJSONObject(obj);
-                String hash = buildTokenCacheHash(token.getUrl(), token.getInfo());
+                String hash = buildTokenCacheHash(token.getConnection(), token.getInfo());
                 cache.put(hash, token);
             }
         } catch (IOException e) {
-            throw new SQLException("Failed to create cache directory", e);
+            throw new SQLException("Failed to load token cache: " + tokenCacheFile, e);
         }
     }
 

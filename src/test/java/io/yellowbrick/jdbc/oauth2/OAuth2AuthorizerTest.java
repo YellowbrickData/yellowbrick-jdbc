@@ -47,7 +47,7 @@ class OAuth2AuthorizerTest extends AuthorizerTestSupport {
     void testAuthIdToken() {
         wm.setScenarioState("TokenFlow", "SUCCESS");
         assertDoesNotThrow(() -> {
-            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_CLIENT_ID, info);
+            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_URL, info);
             Token accessToken = auth2Authorizer.getOAuth2AccessToken();
             assertEquals(accessToken.getAuthToken(), OAUTH2_TEST_ID_TOKEN);
         });
@@ -60,7 +60,7 @@ class OAuth2AuthorizerTest extends AuthorizerTestSupport {
         wm.setScenarioState("TokenFlow", "SUCCESS");
         assertDoesNotThrow(() -> {
             info.setProperty(DriverConstants.YB_JDBC_OAUTH2_TOKEN_TYPE, DriverConstants.YB_JDBC_OAUTH2_TOKEN_TYPE_ACCESS_TOKEN);
-            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_CLIENT_ID, info);
+            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_URL, info);
             Token accessToken = auth2Authorizer.getOAuth2AccessToken();
             assertEquals(accessToken.getAuthToken(), OAUTH2_TEST_ACCESS_TOKEN);
         });
@@ -72,7 +72,7 @@ class OAuth2AuthorizerTest extends AuthorizerTestSupport {
     void testAuthNotAuthorized() {
         wm.setScenarioState("TokenFlow", "ERROR");
         SQLException ex = assertThrows(SQLException.class, () -> {
-            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_CLIENT_ID, info);
+            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_URL, info);
             auth2Authorizer.getOAuth2AccessToken();
         });
         assertTrue(ex.getMessage().contains("error: " + OAUTH2_TEST_ERROR));
@@ -85,7 +85,7 @@ class OAuth2AuthorizerTest extends AuthorizerTestSupport {
     void testAuthExpired() {
         wm.setScenarioState("TokenFlow", "TIMEOUT");
         SQLException ex = assertThrows(SQLException.class, () -> {
-            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_CLIENT_ID, info);
+            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_URL, info);
             auth2Authorizer.getOAuth2AccessToken();
         });
         assertTrue(ex.getMessage().contains("Device authentication expired"));
@@ -101,13 +101,13 @@ class OAuth2AuthorizerTest extends AuthorizerTestSupport {
         wm.setScenarioState("TokenFlow", "SUCCESS");
         assertDoesNotThrow(() -> {
             info.setProperty(DriverConstants.YB_JDBC_OAUTH2_SCOPES, DriverConstants.YB_JDBC_OAUTH2_SCOPES_DEFAULT);
-            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_CLIENT_ID, info);
+            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_URL, info);
             Token token = auth2Authorizer.getOAuth2AccessToken();
             refreshToken.set(token.getRefreshToken());
         });
         assertState("AUTHORIZED", 1);
         assertDoesNotThrow(() -> {
-            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_CLIENT_ID, info);
+            OAuth2Authorizer auth2Authorizer = new OAuth2Authorizer(new DriverConfiguration(info), OAUTH2_TEST_URL, info);
             Token token = auth2Authorizer.refreshOAuth2AccessToken(refreshToken.get());
             assertEquals(token.getAuthToken(), OAUTH2_TEST_ID_TOKEN);
         });

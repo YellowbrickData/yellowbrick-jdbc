@@ -24,6 +24,8 @@
 package io.yellowbrick.jdbc.oauth2;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +43,7 @@ import io.yellowbrick.jdbc.DriverConstants;
 @WireMockTest
 class TokenServiceTest extends AuthorizerTestSupport {
     final static String TOKENSERVICE_TEST_URL = "jdbc:yb://host:5432/database";
+    final static String TOKENSERVICE_TEST_URL2 = "jdbc:yb://host:5432/database2";
 
     @BeforeAll
     static void enableTokenCacheTestPersistence() {
@@ -108,6 +111,22 @@ class TokenServiceTest extends AuthorizerTestSupport {
         });
         assertState("AUTHORIZED", 1);
         assertState("REFRESHED", 1);
+    }
+
+    @Test
+    @DisplayName("Access Token Cache, File Cache Mode, 2 Databases")
+    void testTokenCache2Databases() {
+        wm.setScenarioState("TokenFlow", "SUCCESS");
+        info.setProperty(DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE, DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE_FILE);
+        DriverConfiguration driverConfiguration = new DriverConfiguration(info);
+        assertDoesNotThrow(() -> {
+            Token accessToken1 = TokenService.getInstance().getToken(driverConfiguration, TOKENSERVICE_TEST_URL, info);
+            Token accessToken2 = TokenService.getInstance().getToken(driverConfiguration, TOKENSERVICE_TEST_URL2, info);
+            assertNotNull(accessToken1);
+            assertNotNull(accessToken2);
+            assertEquals(accessToken1.getAuthToken(), accessToken2.getAuthToken());
+        });
+        assertState("AUTHORIZED", 1);
     }
 
     @Test
