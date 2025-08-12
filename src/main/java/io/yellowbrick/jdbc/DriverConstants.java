@@ -66,6 +66,18 @@ public interface DriverConstants {
     };
     String YB_JDBC_OAUTH2_TOKEN_CACHE_DEFAULT = YB_JDBC_OAUTH2_TOKEN_CACHE_MEMORY;
 
+    // What interaction mode to use
+    String YB_JDBC_OAUTH2_INTERACTION_MODE = "oauth2InteractionMode";
+    String YB_JDBC_OAUTH2_INTERACTION_MODE_DIALOG = "dialog";
+    String YB_JDBC_OAUTH2_INTERACTION_MODE_BROWSER = "browser";
+    String YB_JDBC_OAUTH2_INTERACTION_MODE_CONSOLE = "console";
+    String YB_JDBC_OAUTH2_INTERACTION_MODE_DEFAULT = YB_JDBC_OAUTH2_INTERACTION_MODE_DIALOG;
+    String[] YB_JDBC_OAUTH2_INTERACTION_MODE_OPTIONS = {
+        YB_JDBC_OAUTH2_INTERACTION_MODE_DIALOG,
+        YB_JDBC_OAUTH2_INTERACTION_MODE_BROWSER,
+        YB_JDBC_OAUTH2_INTERACTION_MODE_CONSOLE
+    };
+
     // Path to custom CA certificate (PEM)
     String YB_JDBC_OAUTH2_CACERT_PATH = "oauth2CAcertPath";
 
@@ -73,6 +85,5 @@ public interface DriverConstants {
     String YB_JDBC_OAUTH2_DISABLE_TRUST = "oauth2SSLDisableTrust";
 
     // Miscellaneous properties
-    String YB_JDBC_OAUTH2_NO_BROWSER = "oauth2NoBrowser";
     String YB_JDBC_OAUTH2_QUIET = "oauth2Quiet"; // test only
 }

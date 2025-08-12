@@ -86,7 +86,7 @@ These properties configure the OAuth2 flow for the driver.
 | `oauth2Scopes` | OAuth2 scopes to request. | Optional (default: `openid email profile offline_access`) | `openid email profile` |
 | `oauth2TokenType` | Token type to use for authentication. Options: `id-token` (default) or `access-token`. | Optional | `access-token` |
 | `oauth2TokenCache` | Token cache strategy. Options: `memory` (default), `file`, `disabled`. | Optional | `file` |
-| `oauth2NoBrowser` | If `true`, disables automatic browser pop-up for device flow. | Optional | `true` |
+| `oauth2InteractionMode` | Set to `dialog`, `browser` or `console` to control display of device code/url. | Optional | `dialog` |
 | `oauth2CAcertPath` | Path to custom CA certificate (PEM) for TLS validation. | Optional | `/path/to/cert.pem` |
 | `oauth2SSLDisableTrust` | If `true`, disables SSL certificate validation (for testing). | Optional | `true` |
 
@@ -156,6 +156,22 @@ Including the `offline_access` scope in your `oauth2Scopes` allows the driver to
 
 Treat refresh tokens with care. Secure the cache file appropriately, and consider your security requirements before enabling persistent caching.
 
+### 🔑  Device Code Interaction Mode `oauth2InteractionMode`
+
+You may change how the device code and device code url is displayed by setting this property.  Each of these options which will
+display the device code and the device code flow URL validation endpoint.  The `dialog` and `browser` options contain
+features allowing copy to clipboard, and launching to the device code flow URL.
+
+The possible modes are:
+- **dialog**: A lightweight java AWT dialog is displayed
+- **browser**: A browser window is opened pointing to a micro-webserver at a random port listening on localhost
+- **console**: The information is written to stdout for the process initiating the connection
+
+**Note:** depending on your organization's requirements, and your JDBC client's user interface, the `dialog` option
+may not display properly, or could be parented to a window other than the main process window.  In this case, using
+`browser` option may have a smoother user experience.
+
+
 ## ✅ Defaults Summary
 
 | Property | Default | Notes |
@@ -163,6 +179,7 @@ Treat refresh tokens with care. Secure the cache file appropriately, and conside
 | `oauth2Scopes` | `openid email profile offline_access` | The `openid` scope is required if `oauth2TokenType` is set to `id-token`.  The `offline_access` scope is required if refresh token handling is desired. |
 | `oauth2TokenType` | `id-token` | Generally, `id-token` is required for most OAuth2 providers.  Some providers use a signed JWT for access token (eg. Azure Entra ID), so `access-token` can be used. |
 | `oauth2TokenCache` | `memory` | For persistent logins across client tool restarts, set this value to `file`.  See `Token Caching` in previous section. |
+| `oauth2InteractionMode` | `dialog` | The value of `dialog` is the default, optional values `browser` and `console`. |
 
 
 ## 🌐 External Authentication SQL Setup

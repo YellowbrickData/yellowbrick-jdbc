@@ -166,12 +166,13 @@ public class YellowbrickDriver implements Driver, DriverConstants {
         cacertPath.required = false;
         props.add(cacertPath);
 
-        // No browser option
-        DriverPropertyInfo noBrowser = new DriverPropertyInfo(YB_JDBC_OAUTH2_NO_BROWSER, info.getProperty(YB_JDBC_OAUTH2_NO_BROWSER, "false"));
-        noBrowser.description = "If true, do not attempt to open a browser for device code login.  For command line tools that display stdout.  Default is false.";
-        noBrowser.required = false;
-        noBrowser.choices = new String[]{"true", "false"};
-        props.add(noBrowser);
+        // Interaction mode
+        String interactionModeValue = info.getProperty(YB_JDBC_OAUTH2_INTERACTION_MODE, YB_JDBC_OAUTH2_INTERACTION_MODE_DEFAULT);
+        DriverPropertyInfo interactionMode = new DriverPropertyInfo(YB_JDBC_OAUTH2_INTERACTION_MODE, interactionModeValue);
+        interactionMode.description = "OAuth2 interaction mode for presenting device code (dialog, browser, or console). Default is: " + YB_JDBC_OAUTH2_INTERACTION_MODE_DEFAULT;
+        interactionMode.choices = YB_JDBC_OAUTH2_INTERACTION_MODE_OPTIONS;
+        interactionMode.required = false;
+        props.add(interactionMode);
 
         // Add properties from the underlying PostgreSQL driver
         Collections.addAll(props, delegate.getPropertyInfo(url, info));

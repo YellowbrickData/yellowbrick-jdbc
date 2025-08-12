@@ -173,7 +173,7 @@ abstract class AuthorizerTestSupport {
         info = new Properties();
         info.setProperty(DriverConstants.YB_JDBC_OAUTH2_ISSUER, wm.baseUrl());
         info.setProperty(DriverConstants.YB_JDBC_OAUTH2_CLIENT_ID, OAUTH2_TEST_CLIENT_ID);
-        info.setProperty(DriverConstants.YB_JDBC_OAUTH2_NO_BROWSER, Boolean.TRUE.toString());
+        info.setProperty(DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE, DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE_CONSOLE);
         info.setProperty(DriverConstants.YB_JDBC_OAUTH2_QUIET, Boolean.TRUE.toString());
     }
 

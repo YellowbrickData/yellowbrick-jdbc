@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -52,6 +53,8 @@ import org.json.JSONObject;
 
 import io.yellowbrick.jdbc.DriverConfiguration;
 import io.yellowbrick.jdbc.DriverConstants;
+import io.yellowbrick.jdbc.DriverConfiguration.InteractionMode;
+import io.yellowbrick.jdbc.dialog.DeviceCodeDialog;
 import io.yellowbrick.jdbc.web.DeviceCodeServer;
 
 public class OAuth2Authorizer implements DriverConstants {
@@ -75,6 +78,7 @@ public class OAuth2Authorizer implements DriverConstants {
 
     public Token getOAuth2AccessToken() throws SQLException {
         DeviceCodeServer server = null;
+        Runnable dialogDispose = null;
         try {
             Endpoints endpoints = getAuthorizationEndpoints();
 
@@ -137,17 +141,20 @@ public class OAuth2Authorizer implements DriverConstants {
             }
             trace("Browser URL: %s, user code: %s\n", url, userCode);
 
-            if (this.driverConfiguration.noBrowser) {
+            final AtomicBoolean cancelled = new AtomicBoolean();
+            if (this.driverConfiguration.interactionMode == InteractionMode.CONSOLE) {
                 if (!this.driverConfiguration.quiet) {
                     System.out.printf(
                             "\nTo authenticate to Yellowbrick, please visit this URL:\n\n    %s\n    and enter code %s\n\n",
                             url, userCode);
                 }
-            } else {
+            } else if (this.driverConfiguration.interactionMode == InteractionMode.BROWSER) {
                 int port = getRandomFreePort();
                 server = new DeviceCodeServer(port, userCode, url);
                 trace("Device code server started on http://localhost:%d\n", port);
                 browse("http://localhost:" + port);
+            } else {
+                dialogDispose = DeviceCodeDialog.show(url, userCode, ok -> cancelled.set(!ok));
             }
 
             // Get the device code, expiry, and interval
@@ -176,7 +183,7 @@ public class OAuth2Authorizer implements DriverConstants {
             long expireAt = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(expiresIn);
             trace("Token will expire in %d seconds, probing ever %d seconds, at %s\n", expiresIn, interval,
                     Instant.ofEpochMilli(expireAt).toString());
-            while (System.currentTimeMillis() < expireAt) {
+            while (System.currentTimeMillis() < expireAt && !cancelled.get()) {
 
                 trace("Query token endpoint %s with payload %s\n", endpoints.tokenEndpoint, tokenPayload);
                 HttpRequest tokenRequest = HttpRequest.newBuilder()
@@ -213,7 +220,7 @@ public class OAuth2Authorizer implements DriverConstants {
             }
 
             if (authToken == null) {
-                throw new SQLException("Device authentication expired");
+                throw new SQLException(cancelled.get() ? "User cancelled login" : "Device authentication expired");
             }
             trace("Returning token: %s\n", authToken);
 
@@ -229,6 +236,13 @@ public class OAuth2Authorizer implements DriverConstants {
                     server.stop();
                 } catch (Exception e) {
                     System.err.println("Failed to stop device code server: " + e.getMessage());
+                }
+            }
+            if (dialogDispose != null) {
+                try {
+                    dialogDispose.run();
+                } catch (Exception e) {
+                    System.err.println("Failed to stop device code dialog: " + e.getMessage());
                 }
             }
         }

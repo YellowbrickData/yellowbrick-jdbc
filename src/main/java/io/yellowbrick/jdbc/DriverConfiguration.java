@@ -75,6 +75,27 @@ public class DriverConfiguration {
         }
     }
 
+    public enum InteractionMode {
+        DIALOG,
+        BROWSER,
+        CONSOLE;
+
+        public static InteractionMode fromString(String value) {
+            if (value == null)
+                return DIALOG; // Default
+            switch (value.toLowerCase()) {
+                case "dialog":
+                    return DIALOG;
+                case "browser":
+                    return BROWSER;
+                case "console":
+                    return CONSOLE;
+                default:
+                    throw new IllegalArgumentException("Invalid interaction mode option: " + value);
+            }
+        }
+    }
+
     // OAuth2 client configuration
     public final String clientId;
     public final String clientSecret;
@@ -84,7 +105,7 @@ public class DriverConfiguration {
     public final String audience;
     public final TokenType tokenType;
     public final TokenCacheOption tokenCache;
-    public final boolean noBrowser;
+    public final InteractionMode interactionMode;
     public final boolean quiet; // test only, and only if noBrowser is true
     public final String cacertPath;
     public final boolean disableTrust;
@@ -104,8 +125,9 @@ public class DriverConfiguration {
         this.tokenCache = TokenCacheOption.fromString(info.getProperty(
                 DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE, 
                 DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE_DEFAULT));
-        this.noBrowser = Boolean.parseBoolean(info.getProperty(
-                DriverConstants.YB_JDBC_OAUTH2_NO_BROWSER, "false"));
+        this.interactionMode = InteractionMode.fromString(info.getProperty(
+                DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE, 
+                DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE_DEFAULT));
         this.quiet = Boolean.parseBoolean(info.getProperty(
                 DriverConstants.YB_JDBC_OAUTH2_QUIET, "false"));
         this.cacertPath = info.getProperty(DriverConstants.YB_JDBC_OAUTH2_CACERT_PATH);
