@@ -101,8 +101,8 @@ With OAuth2 properties (via `Properties` object or URL query params):
 ```java
 String url = "jdbc:yb://host:5432/database"
 Properties props = new Properties();
-props.setProperty("oauth2ClientId", "abc123");
-props.setProperty("oauth2Issuer", "https://login.microsoftonline.com/tenant/v2.0");
+props.setProperty("oauth2ClientId", "ccddeeff-0011-2233-44556677");
+props.setProperty("oauth2Issuer", "https://login.microsoftonline.com/11223344-5566-7788-99001122/v2.0");
 try (Connection conn = DriverManager.getConnection(url, props)) {
 }
 ```
@@ -174,10 +174,10 @@ Here’s an example:
 ```sql
 DROP EXTERNAL AUTHENTICATION IF EXISTS ad;
 CREATE EXTERNAL AUTHENTICATION ad
-  issuer 'https://login.microsoftonline.com/{tenantId}/v2.0'
+  issuer 'https://login.microsoftonline.com/11223344-5566-7788-99001122/v2.0'
   user_mapping_claim 'preferred_username'
   grant ('consumer', 'consumeradmin', 'useradmin', 'securityadmin', 'clusteradmin', 'sysadmin')
-  audience ('{clientId}')
+  audience ('ccddeeff-0011-2233-44556677')
   auto_create
   enabled;
 ```
