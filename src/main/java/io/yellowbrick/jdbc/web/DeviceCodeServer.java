@@ -38,7 +38,7 @@ public class DeviceCodeServer {
     private final HttpServer server;
 
     public DeviceCodeServer(int port, String userCode, String verificationUri) throws IOException {
-        server = HttpServer.create(new InetSocketAddress(port), 0);
+        server = HttpServer.create(new InetSocketAddress("localhost", port), 0);
         server.createContext("/", new DeviceHandler(userCode, verificationUri));
         server.createContext("/favicon.ico", new FavIconHandler());
         server.createContext("/particles.js", new ParticlesJSHandler());
