@@ -39,8 +39,6 @@ import org.json.JSONObject;
 import io.yellowbrick.jdbc.DriverConfiguration;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 
