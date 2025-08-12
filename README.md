@@ -151,18 +151,18 @@ several connections to introspect database objects and metadata, and this config
 Including the `offline_access` scope in your `oauth2Scopes` allows the driver to request a **refresh token**.
 
 - **Refresh Token**: A long-lived token used to request new access tokens without user interaction.
-- **Advantages**: Avoids repeated browser logins, provides seamless authentication.
+- **Advantages**: Avoids repeated browser logins, provides seamless authentication, even if the client tool restarts (when combined with `oauth2TokenCache` setting `file`).
 - **Risks**: Similar to caching a password. If an attacker gains access to the token cache file, they can obtain access tokens and act as the user.
 
 Treat refresh tokens with care. Secure the cache file appropriately, and consider your security requirements before enabling persistent caching.
 
 ## ✅ Defaults Summary
 
-| Property | Default |
-|----------|---------|
-| `oauth2Scopes` | `openid email profile offline_access` |
-| `oauth2TokenType` | `id-token` |
-| `oauth2TokenCache` | `memory` |
+| Property | Default | Notes |
+|----------|---------|-------|
+| `oauth2Scopes` | `openid email profile offline_access` | The `openid` scope is required if `oauth2TokenType` is set to `id-token`.  The `offline_access` scope is required if refresh token handling is desired. |
+| `oauth2TokenType` | `id-token` | Generally, `id-token` is required for most OAuth2 providers.  Some providers use a signed JWT for access token (eg. Azure Entra ID), so `access-token` can be used. |
+| `oauth2TokenCache` | `memory` | For persistent logins across client tool restarts, set this value to `file`.  See `Token Caching` in previous section. |
 
 
 ## 🌐 External Authentication SQL Setup
