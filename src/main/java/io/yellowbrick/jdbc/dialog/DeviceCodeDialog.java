@@ -227,6 +227,14 @@ public final class DeviceCodeDialog {
         dlg.setLocationRelativeTo(null);
         dlg.setVisible(true);
 
+        // Attempt to bring to front
+        EventQueue.invokeLater(() -> {
+            dlg.setAlwaysOnTop(true);
+            dlg.toFront();
+            dlg.requestFocus();
+            dlg.setAlwaysOnTop(false);
+        });
+
         return () -> {
             dispose.run();
         };
