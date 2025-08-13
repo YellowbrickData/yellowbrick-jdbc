@@ -5,6 +5,7 @@
   `oauth2NoBrowser`
 - When using `browser` interaction mode, open web server on
   random port bound to localhost, not 0.0.0.0
+- Change `oauth2Audience` to non-required parameter
 
 # 0.9.2
 
