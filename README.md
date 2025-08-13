@@ -128,7 +128,6 @@ By default, the driver **caches tokens** to avoid repeated browser logins.
 if using the `memory` scheme, using `offline_access` scope will reduce the need to repeatedly login.  Some JDBC client tools will open
 several connections to introspect database objects and metadata, and this configuration option assists in avoiding repeated logins.
 
----
 
 ## 🔒 Token Types (`oauth2TokenType`)
 
@@ -144,9 +143,8 @@ several connections to introspect database objects and metadata, and this config
 | `oauth2CAcertPath` | Path to custom PEM CA certificate. | N/A |
 | `oauth2SSLDisableTrust` | If `true`, disables SSL certificate validation (for testing only!). | `false` |
 
----
 
-### 🔒 Refresh Tokens and `offline_access` Scope
+## 🔒 Refresh Tokens and `offline_access` Scope
 
 Including the `offline_access` scope in your `oauth2Scopes` allows the driver to request a **refresh token**.
 
@@ -156,7 +154,7 @@ Including the `offline_access` scope in your `oauth2Scopes` allows the driver to
 
 Treat refresh tokens with care. Secure the cache file appropriately, and consider your security requirements before enabling persistent caching.
 
-### 🔑  Device Code Interaction Mode `oauth2InteractionMode`
+## 🔑  Device Code Interaction Mode (`oauth2InteractionMode`)
 
 You may change how the device code and device code url is displayed by setting this property.  Each of these options which will
 display the device code and the device code flow URL validation endpoint.  The `dialog` and `browser` options contain
@@ -224,9 +222,9 @@ We at Yellowbrick recognize and embrace the value of opensource.
 
 There are a few opensource dependencies of note used to construct this driver:
 
-| Name         | License Type                  | URL                                            |
-|--------------|-------------------------------|------------------------------------------------|
-| pgjdbc       | PostgreSQL License (BSD-like) | https://github.com/pgjdbc/pgjdbc               |
-| org.json     | JSON License (Public Domain)  | https://github.com/stleary/JSON-java           |
-| particles.js | MIT License                   | https://github.com/VincentGarreau/particles.js |
+| Name         | License Type                  | Use For                   | URL                                            |
+|--------------|-------------------------------|---------------------------|------------------------------------------------|
+| pgjdbc       | PostgreSQL License (BSD-like) | Base driver functionality | https://github.com/pgjdbc/pgjdbc               |
+| org.json     | JSON License (Public Domain)  | JSON codec                | https://github.com/stleary/JSON-java           |
+| particles.js | MIT License                   | Web page animation        | https://github.com/VincentGarreau/particles.js |
 
