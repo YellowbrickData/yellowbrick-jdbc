@@ -1,6 +1,7 @@
 # 0.9.3
 
-- Implement new interaction mode to display device code/url
+- Implement new interaction mode "dialog" to display device code/url
+  with java AWT dialog
 - Add JDBC parameter `oauth2InteractionMode`; retire/merge with
   `oauth2NoBrowser`
 - When using `browser` interaction mode, open web server on

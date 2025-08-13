@@ -161,6 +161,9 @@ public class Token {
             // Append scheme:host:port?queryParameters
             URI uri = new URI(rawUrl);
             StringBuilder result = new StringBuilder();
+            if (uri.getHost() == null) {
+                throw new SQLException(String.format("Could not parse JDBC URL: %s", jdbcUrl));
+            }
             result.append(uri.getScheme()).append(":").append(uri.getHost());
             if (uri.getPort() != -1) {
                 result.append(":").append(uri.getPort());

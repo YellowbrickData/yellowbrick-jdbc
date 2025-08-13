@@ -29,6 +29,8 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import javax.swing.JFrame;
+
 public final class FrameFinder {
     private FrameFinder() {
     }
@@ -49,14 +51,14 @@ public final class FrameFinder {
         supplier = s;
     }
 
-    /** 
-     * Find the best top-level AWT Frame to use as a dialog owner. 
+    /**
+     * Find the best top-level AWT Frame to use as a dialog owner.
      * 
      * @return top-level AWT frame for parenting a dialog.
      **/
     public static Optional<Frame> findTopLevelFrame() {
         try {
-            // 1) App-provided supplier wins
+            // 1) App-provided
             if (supplier != null) {
                 Frame f = safeGet(supplier);
                 if (isUsable(f))
@@ -65,20 +67,32 @@ public final class FrameFinder {
 
             // 2) Active or focused Frame
             KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-            Window w = kfm.getActiveWindow();
-            if (!(w instanceof Frame))
-                w = kfm.getFocusedWindow();
-            if (w instanceof Frame && isUsable((Frame) w))
-                return Optional.of((Frame) w);
 
-            // 3) Any showing Frame, prefer front-most by a simple heuristic
-            Optional<Frame> anyShowing = Arrays.stream(Frame.getFrames())
-                    .filter(FrameFinder::isUsable)
+            Window w = kfm.getActiveWindow();
+            if (w == null) {
+                w = kfm.getFocusedWindow();
+            }
+            Frame owner = windowToFrame(w);
+            if (isUsable(owner)) {
+                return Optional.of(owner);
+            }
+
+            // 3) Prefer a visible, non-iconified Frame
+            Optional<Frame> fr = Arrays.stream(Frame.getFrames())
+                    .filter(FrameFinder::isVisibleNotIconified)
                     .min(Comparator.comparingInt(FrameFinder::zOrderHint));
-            if (anyShowing.isPresent())
-                return anyShowing;
+            if (fr.isPresent()) {
+                return fr;
+            }
+
+            // 4) As a last resort, scan all Windows and map to owner Frames
+            for (Window win : Window.getWindows()) {
+                Frame f = windowToFrame(win);
+                if (isUsable(f)) {
+                    return Optional.of(f);
+                }
+            }
         } catch (SecurityException ignored) {
-            // Sandbox environments may restrict this — fall through to empty
         }
         return Optional.empty();
     }
@@ -91,8 +105,21 @@ public final class FrameFinder {
         }
     }
 
+    private static Frame windowToFrame(Window w) {
+        while (w != null && !(w instanceof Frame)) {
+            w = w.getOwner();
+        }
+        return (Frame) w;
+    }
+
     private static boolean isUsable(Frame f) {
-        return f != null && f.isShowing();
+        return f != null && f.isDisplayable() && isVisibleNotIconified(f);
+    }
+
+    private static boolean isVisibleNotIconified(Frame f) {
+        return f != null
+                && f.isVisible()
+                && (f.getExtendedState() & Frame.ICONIFIED) == 0;
     }
 
     /** Lower score ≈ more likely front-most. */
