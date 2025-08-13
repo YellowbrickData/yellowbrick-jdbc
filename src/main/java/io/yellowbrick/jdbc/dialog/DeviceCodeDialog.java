@@ -137,7 +137,7 @@ public final class DeviceCodeDialog {
         Panel codeSpacer = new Panel();
         codeSpacer.setPreferredSize(new Dimension(16, 16));
 
-        Panel codePanel = new Panel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        Panel codePanel = new Panel(new FlowLayout(FlowLayout.LEFT, 8, 8));
         codePanel.addMouseListener(copyToClipboardListener);
         codePanel.setBackground(new Color(0xF5F7F6));
         codePanel.add(codeField);
