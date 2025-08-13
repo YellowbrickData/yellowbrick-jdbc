@@ -6,6 +6,7 @@
 - When using `browser` interaction mode, open web server on
   random port bound to localhost, not 0.0.0.0
 - Change `oauth2Audience` to non-required parameter
+- Fix an URL parsing issue when URI does not contain //
 
 # 0.9.2
 

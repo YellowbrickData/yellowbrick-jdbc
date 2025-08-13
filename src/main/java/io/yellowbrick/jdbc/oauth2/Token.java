@@ -145,18 +145,21 @@ public class Token {
      * Why? the identity here is for the user, not the database.  A user either has the privilege
      *      to CONNECT to the database or not, but the same token can be used for any target
      *      database.
+     * @throws SQLException
      */
     static String extractConnectionInfo(String jdbcUrl) throws SQLException {
         try {
+            // Remove the jdbc: prefix for URI parsing
             if (!jdbcUrl.startsWith("jdbc:")) {
                 throw new SQLException("Invalid JDBC URL: must start with 'jdbc:'");
             }
-
-            // Remove the jdbc: prefix for URI parsing
             String rawUrl = jdbcUrl.substring(5);
-            URI uri = new URI(rawUrl);
+
+            // Fixup proper URI format which must include //
+            rawUrl = rawUrl.replaceFirst("^(?i)(postgresql|yb):(?=[^/]*:)", "$1://");
 
             // Append scheme:host:port?queryParameters
+            URI uri = new URI(rawUrl);
             StringBuilder result = new StringBuilder();
             result.append(uri.getScheme()).append(":").append(uri.getHost());
             if (uri.getPort() != -1) {
