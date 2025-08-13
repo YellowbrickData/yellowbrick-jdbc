@@ -1,0 +1,11 @@
+# 0.9.3
+
+- Implement new interaction mode to display device code/url
+- Add JDBC parameter `oauth2InteractionMode`; retire/merge with
+  `oauth2NoBrowser`
+- When using `browser` interaction mode, open web server on
+  random port bound to localhost, not 0.0.0.0
+
+# 0.9.2
+
+- Initial Release
