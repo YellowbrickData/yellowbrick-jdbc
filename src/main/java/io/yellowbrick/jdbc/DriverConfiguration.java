@@ -82,7 +82,7 @@ public class DriverConfiguration {
 
         public static InteractionMode fromString(String value) {
             if (value == null)
-                return DIALOG; // Default
+                return BROWSER; // Default
             switch (value.toLowerCase()) {
                 case "dialog":
                     return DIALOG;
@@ -120,13 +120,13 @@ public class DriverConfiguration {
                 DriverConstants.YB_JDBC_OAUTH2_SCOPES,
                 DriverConstants.YB_JDBC_OAUTH2_SCOPES_DEFAULT);
         this.tokenType = TokenType.fromString(info.getProperty(
-                DriverConstants.YB_JDBC_OAUTH2_TOKEN_TYPE, 
+                DriverConstants.YB_JDBC_OAUTH2_TOKEN_TYPE,
                 DriverConstants.YB_JDBC_OAUTH2_TOKEN_TYPE_DEFAULT));
         this.tokenCache = TokenCacheOption.fromString(info.getProperty(
-                DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE, 
+                DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE,
                 DriverConstants.YB_JDBC_OAUTH2_TOKEN_CACHE_DEFAULT));
         this.interactionMode = InteractionMode.fromString(info.getProperty(
-                DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE, 
+                DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE,
                 DriverConstants.YB_JDBC_OAUTH2_INTERACTION_MODE_DEFAULT));
         this.quiet = Boolean.parseBoolean(info.getProperty(
                 DriverConstants.YB_JDBC_OAUTH2_QUIET, "false"));
